@@ -1,0 +1,21 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: userservice
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/contract_review_db
+    username: postgres
+    password: Kiran@2211
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+#logging:
+#  level:
+#    org.springframework.security: INFO
+#    com.contractreview.userservice : DEBUG
+

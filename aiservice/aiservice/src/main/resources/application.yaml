@@ -1,0 +1,31 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: ai-review-service
+
+  data:
+    mongodb:
+      uri: mongodb://127.0.0.1:27017/contract_review_db
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: ai-review-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.value.default.type: com.contractreview.contractservice.event.ContractUploadedEvent
+
+gemini:
+  api:
+    key: ${GEMINI_API_KEY:}
+    url: https://generativelanguage.googleapis.com/v1beta/models
+    model: gemini-1.5-flash
+
+logging:
+  level:
+    com.contractreview: DEBUG
+    org.springframework.web: DEBUG
