@@ -32,3 +32,4 @@ logging:
     org.springframework.data.mongodb: DEBUG
     org.mongodb.driver: DEBUG
     org.springframework.kafka: DEBUG
+
