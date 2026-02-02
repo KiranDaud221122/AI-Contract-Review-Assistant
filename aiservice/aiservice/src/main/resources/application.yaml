@@ -17,7 +17,15 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "*"
-        spring.json.value.default.type: com.contractreview.contractservice.event.ContractUploadedEvent
+        spring.json.value.default.type: com.contractreview.aiservice.event.ContractUploadedEvent
+        auto.offset.reset: latest
+        enable.auto.commit: true
+
+
+kafka:
+  topic:
+    name: contract-uploaded
+
 
 gemini:
   api:

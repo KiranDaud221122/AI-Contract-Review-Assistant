@@ -1,23 +1,19 @@
+// src/main/java/com/contractreview/aiservice/event/ContractUploadedEvent.java
+
 package com.contractreview.aiservice.event;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ContractUploadedEvent implements Serializable {
-
+public class ContractUploadedEvent {
     private String contractId;
     private String userId;
     private String gridFsFileId;
     private String originalFileName;
     private String contentType;
     private long fileSizeBytes;
-
-
-
 }

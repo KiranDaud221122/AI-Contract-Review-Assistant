@@ -19,10 +19,8 @@ public class ContractUploadListener {
     @KafkaListener(topics = "${kafka.topic.name:contract-uploaded}", groupId = "ai-review-group")
     public void processContract(ContractUploadedEvent event) {
         log.info("Received contract event | contractId: {}", event.getContractId());
-
         ReviewResult result = reviewService.generateReview(event);
         reviewRepository.save(result);
-
         log.info("AI review saved for contractId: {}", event.getContractId());
     }
 }
