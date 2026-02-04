@@ -1,30 +1,29 @@
 package com.contractreview.contractservice.service;
 
 import com.contractreview.contractservice.event.ContractUploadedEvent;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
-@AllArgsConstructor
 public class KafkaProducerService {
 
-    private static final String TOPIC_NAME= "contract-uploaded";
-
     private final KafkaTemplate<String, ContractUploadedEvent> kafkaTemplate;
+    @Value("${kafka.topic.name}")
+    private String topic;
 
-    public void sendContractUploadedEvent (ContractUploadedEvent event){
-        try{
-            kafkaTemplate.send(TOPIC_NAME, event.getContractId(),event);
-            log.info("Kafka event publish | contractId: {}, file: {}",event.getContractId(),event.getOriginalFileName());
-        }
-        catch (Exception ex){
-            log.error(" Failed to publish Kafka event for contractId: {}",
-                    event.getContractId(), ex);
-
-        }
+    public void sendContractUploadedEvent(ContractUploadedEvent event) {
+        kafkaTemplate.send(topic, event.getContractId(), event)
+                .whenComplete((result, ex) -> {
+                    if (ex == null) {
+                        log.info("Kafka event published | contractId: {}", event.getContractId());
+                    } else {
+                        log.error("Kafka publish failed | contractId: {}", event.getContractId(), ex);
+                    }
+                });
     }
-
 }

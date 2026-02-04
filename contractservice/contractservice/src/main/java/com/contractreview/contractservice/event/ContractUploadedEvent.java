@@ -16,7 +16,7 @@ public class ContractUploadedEvent implements Serializable {
     private String gridFsFileId;
     private String originalFileName;
     private String contentType;
-    private long fileSIzeBytes;
+    private long fileSizeBytes;
 
 
 

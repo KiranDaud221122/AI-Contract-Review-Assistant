@@ -1,4 +1,3 @@
-// src/main/java/com/contractreview/aiservice/event/ContractUploadedEvent.java
 
 package com.contractreview.aiservice.event;
 

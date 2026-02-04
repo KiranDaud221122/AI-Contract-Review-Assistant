@@ -4,9 +4,9 @@ import com.contractreview.contractservice.entity.Contract;
 import com.contractreview.contractservice.event.ContractUploadedEvent;
 import com.contractreview.contractservice.repository.ContractRepository;
 import com.mongodb.client.gridfs.model.GridFSFile;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -22,29 +22,23 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class ContractService {
 
-    @Autowired
-    private GridFsOperations gridFsOperations;
-
-    @Autowired
-    private ContractRepository contractRepository;
-
-    @Autowired
-    private KafkaProducerService kafkaProducerService;
+    private final GridFsOperations gridFsOperations;
+    private final ContractRepository contractRepository;
+    private final KafkaProducerService kafkaProducerService;  // renamed for clarity
 
     public String uploadContract(MultipartFile file, String userId) throws IOException {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("File is required and cannot be empty");
         }
 
-        log.debug("Starting upload | file: {}, size: {} bytes",
-                file.getOriginalFilename(), file.getSize());
+        log.debug("Starting upload | file: {}, size: {} bytes", file.getOriginalFilename(), file.getSize());
 
-        // 1. Store the actual file content in GridFS
+        // 1. Store file in GridFS
         ObjectId gridFsId = gridFsOperations.store(
                 file.getInputStream(),
                 file.getOriginalFilename(),
@@ -53,9 +47,9 @@ public class ContractService {
         String gridFsFileId = gridFsId.toHexString();
         log.info("File stored in GridFS | id: {}", gridFsFileId);
 
-        // 2. Create metadata entity
+        // 2. Create and save metadata
         Contract contract = new Contract();
-        contract.setContractId(UUID.randomUUID().toString());
+        contract.setContractId(UUID.randomUUID().toString());  // unique contract ID
         contract.setUserId(userId);
         contract.setOriginalFileName(file.getOriginalFilename());
         contract.setContentType(file.getContentType());
@@ -64,38 +58,27 @@ public class ContractService {
         contract.setStatus("UPLOADED");
         contract.setGridFsFileId(gridFsFileId);
 
-        log.info("Attempting to save metadata | contractId: {}, userId: {}, file: {}",
-                contract.getContractId(), userId, file.getOriginalFilename());
+        log.info("Saving contract metadata | contractId: {}, userId: {}", contract.getContractId(), contract.getUserId());
 
-        // 3. Save metadata to MongoDB
-        Contract savedContract;
+        Contract savedContract = contractRepository.save(contract);
+        log.info("Contract saved successfully | id: {}, contractId: {}", savedContract.getId(), savedContract.getContractId());
+
+        // 3. Publish Kafka event (now uncommented + safe)
         try {
-            savedContract = contractRepository.save(contract);
-            log.info("SAVE SUCCESS ✅ | Mongo _id: {}, contractId: {}, userId: {}",
-                    savedContract.getId(), savedContract.getContractId(), savedContract.getUserId());
-
-            if (savedContract.getId() == null) {
-                log.warn("Warning: Saved contract has null _id - possible MongoDB issue");
-            }
-
+            ContractUploadedEvent event = new ContractUploadedEvent(
+                    savedContract.getContractId(),
+                    savedContract.getUserId(),
+                    savedContract.getGridFsFileId(),
+                    savedContract.getOriginalFileName(),
+                    savedContract.getContentType(),
+                    savedContract.getFileSizeBytes()
+            );
+            kafkaProducerService.sendContractUploadedEvent(event);
+            log.info("Kafka event published successfully | contractId: {}", savedContract.getContractId());
         } catch (Exception e) {
-            log.error("MONGO SAVE FAILED  | File: {}, User: {}, Error: {}",
-                    file.getOriginalFilename(), userId, e.getMessage(), e);
-            throw new RuntimeException("Failed to save contract metadata to MongoDB", e);
+            log.error("Failed to publish Kafka event for contractId: {}", savedContract.getContractId(), e);
+            // Optional: mark contract status as "EVENT_FAILED" if you want to retry later
         }
-
-        // 4. Publish Kafka event (uncomment when Jackson/Kafka is fixed)
-        ContractUploadedEvent event = new ContractUploadedEvent(
-                savedContract.getContractId(),
-                savedContract.getUserId(),
-                savedContract.getGridFsFileId(),
-                savedContract.getOriginalFileName(),
-                savedContract.getContentType(),
-                savedContract.getFileSizeBytes()
-        );
-
-        // kafkaProducerService.sendContractUploadedEvent(event);
-        // log.info("Kafka event published | contractId: {}", savedContract.getContractId());
 
         return savedContract.getContractId();
     }
@@ -103,6 +86,7 @@ public class ContractService {
     public Optional<Contract> getContractById(String contractId) {
         return contractRepository.findByContractId(contractId);
     }
+
     public List<Contract> getContractsByUser(String userId) {
         return contractRepository.findByUserId(userId);
     }
@@ -111,12 +95,9 @@ public class ContractService {
         GridFSFile file = gridFsOperations.findOne(
                 Query.query(Criteria.where("_id").is(new ObjectId(gridFsFileId)))
         );
-
         if (file == null) {
-            log.warn("GridFS file not found for id: {}", gridFsFileId);
             throw new IOException("File not found in GridFS for id: " + gridFsFileId);
         }
-
         GridFsResource gridFsResource = gridFsOperations.getResource(file);
         return new InputStreamResource(gridFsResource.getInputStream());
     }
