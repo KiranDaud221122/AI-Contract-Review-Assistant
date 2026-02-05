@@ -1,5 +1,6 @@
 package com.contractreview.userservice.service;
 
+
 import com.contractreview.userservice.dto.RegisterRequest;
 import com.contractreview.userservice.dto.UserResponse;
 import com.contractreview.userservice.entity.User;
@@ -8,15 +9,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import java.time.LocalDateTime;
+
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
-
     // CREATE
     @Transactional
     public UserResponse createUser(RegisterRequest request) {
@@ -43,13 +43,7 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    // READ ALL
-    public List<UserResponse> getAllUsers() {
-        return userRepository.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
-    }
+
 
     // UPDATE (USING USER ID + SAME DTO)
     @Transactional
@@ -89,8 +83,13 @@ public class UserService {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phoneNumber(user.getPhoneNumber())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
+                .createdAt(user.getCreatedAt() != null ? user.getCreatedAt() : LocalDateTime.now())
+                .updatedAt(user.getUpdatedAt() != null ? user.getUpdatedAt() : LocalDateTime.now())
                 .build();
     }
+
+
+
+
+
 }

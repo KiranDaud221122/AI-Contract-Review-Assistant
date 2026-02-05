@@ -34,11 +34,6 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserById(id));
     }
 
-    // READ ALL
-    @GetMapping
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
-    }
 
     // UPDATE (USER ID)
     @PutMapping("/{id}")

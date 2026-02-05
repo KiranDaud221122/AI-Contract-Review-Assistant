@@ -1,0 +1,43 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/auth/**,/api/users/**
+          filters:
+            - RewritePath=/api/auth/(?<segment>.*), /api/auth/${segment}
+            - RewritePath=/api/users/(?<segment>.*), /api/users/${segment}
+
+        - id: contract-service
+          uri: lb://contract-service
+          predicates:
+            - Path=/api/v1/contracts/**
+
+        - id: ai-review-service
+          uri: lb://ai-review-service
+          predicates:
+            - Path=/api/reviews/**
+
+eureka:
+  client:
+    service-url:
+      default-zone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+
+#jwt:
+#  secret: my-very-long-secret-key-used-in-both-gateway-and-user-service-1234567890abcdef1234567890

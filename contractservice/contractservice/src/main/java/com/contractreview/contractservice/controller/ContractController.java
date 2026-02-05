@@ -25,14 +25,11 @@ public class ContractController {
 
     private final ContractService contractService;
 
-    /**
-     * Upload a contract file (PDF, DOCX, etc.)
-     */
     @PostMapping("/upload")
-    public ResponseEntity<String> upload(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "userId", defaultValue = "Welcome to Kiran's Era") String userId) {
-
+    public ResponseEntity<?> upload(
+            @RequestHeader("X-User-Id") String userId,
+            @RequestParam MultipartFile file
+    ) {
         try {
             String contractId = contractService.uploadContract(file, userId);
             log.info("Upload Success | contractId: {}", contractId);
@@ -47,11 +44,6 @@ public class ContractController {
         }
     }
 
-    /**
-     * View or download the uploaded file by contractId
-     * - Opens in browser (PDFs usually inline)
-     * - Use ?download=true to force download
-     */
     @GetMapping("/view/{contractId}")
     public ResponseEntity<Resource> viewFile(
             @PathVariable String contractId,
@@ -87,9 +79,6 @@ public class ContractController {
         }
     }
 
-    /**
-     * Get all contracts uploaded by a user
-     */
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<Contract>> getUserContracts(@PathVariable String userId) {
         List<Contract> contracts = contractService.getContractsByUser(userId);

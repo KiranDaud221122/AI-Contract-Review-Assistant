@@ -1,33 +1,31 @@
 server:
   port: 8081
-
 spring:
   application:
-    name: user-service
+    name: USER-SERVICE
+
   datasource:
     url: jdbc:postgresql://localhost:5432/contract_review_db
     username: postgres
     password: Kiran@2211
+    driver-class-name: org.postgresql.Driver
+
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
 
-#jwt:
-#  secret: my-very-long-secret-key-used-in-both-gateway-and-user-service-1234567890abcdef1234567890
-#  access-token-expiration-ms: 1800000    # 30 minutes
-#  refresh-token-expiration-ms: 604800000 # 7 days
-
 logging:
   level:
     org.springframework.security: INFO
-    com.contractreview.userservice: DEBUG
+    com.contractreview.userservice : DEBUG
+
 
 eureka:
   instance:
     prefer-ip-address: true
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
-    register-with-eureka: true
+        defaultZone: http://localhost:8761/eureka/
+    register-with-eureka:  true
     fetch-registry: true

@@ -39,7 +39,7 @@ public class GeminiService {
                                 .map(body -> new RuntimeException("Gemini API error: " + body))
                 )
                 .bodyToMono(String.class)
-                .timeout(Duration.ofSeconds(30))
+                .timeout(Duration.ofSeconds(90))
                 .doOnError(e -> log.error("Gemini API call failed", e))
                 .block();
     }
