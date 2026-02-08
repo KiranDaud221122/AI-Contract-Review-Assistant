@@ -12,23 +12,33 @@ spring:
           enabled: true
           lower-case-service-id: true
       routes:
+        - id: auth-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/auth/**
+
         - id: user-service
           uri: lb://user-service
           predicates:
-            - Path=/api/auth/**,/api/users/**
+            - Path=/api/users/**
           filters:
-            - RewritePath=/api/auth/(?<segment>.*), /api/auth/${segment}
-            - RewritePath=/api/users/(?<segment>.*), /api/users/${segment}
+            - JwtAuthGatewayFilter
 
         - id: contract-service
           uri: lb://contract-service
           predicates:
             - Path=/api/v1/contracts/**
+          filters:
+            - JwtAuthGatewayFilter
 
         - id: ai-review-service
           uri: lb://ai-review-service
           predicates:
             - Path=/api/reviews/**
+          filters:
+            - JwtAuthGatewayFilter
+
+
 
 eureka:
   client:
@@ -38,6 +48,3 @@ eureka:
     fetch-registry: true
   instance:
     prefer-ip-address: true
-
-#jwt:
-#  secret: my-very-long-secret-key-used-in-both-gateway-and-user-service-1234567890abcdef1234567890
