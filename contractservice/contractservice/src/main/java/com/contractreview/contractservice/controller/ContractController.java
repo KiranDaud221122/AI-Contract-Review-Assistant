@@ -27,9 +27,16 @@ public class ContractController {
 
     @PostMapping("/upload")
     public ResponseEntity<?> upload(
-            @RequestHeader("X-User-Id") String userId,
+            @RequestHeader(value = "X-User-Id", required = false) String userId,
             @RequestParam MultipartFile file
     ) {
+        if (userId == null) {
+            log.error("X-User-Id header missing – request did not pass through API Gateway");
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body("Unauthorized: Missing user identity");
+        }
+
         try {
             String contractId = contractService.uploadContract(file, userId);
             log.info("Upload Success | contractId: {}", contractId);
@@ -38,7 +45,8 @@ public class ContractController {
             log.error("Upload failed due to IO error", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("File upload failed: " + e.getMessage());
-        } catch (IllegalArgumentException e) {
+        }
+        catch (IllegalArgumentException e) {
             log.warn("Bad request: {}", e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
@@ -79,12 +87,13 @@ public class ContractController {
         }
     }
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Contract>> getUserContracts(@PathVariable String userId) {
+    @GetMapping("/user")
+    public ResponseEntity<List<Contract>> getUserContracts(@RequestHeader("X-User-Id") String userId) {
         List<Contract> contracts = contractService.getContractsByUser(userId);
         if (contracts.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(contracts);
     }
+
 }

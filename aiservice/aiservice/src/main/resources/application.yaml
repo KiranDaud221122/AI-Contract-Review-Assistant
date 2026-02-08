@@ -21,8 +21,8 @@ spring:
         spring.json.value.default.type: com.contractreview.aiservice.event.ContractUploadedEvent
 
 kafka:
-    topic:
-      name: contract-uploaded
+  topic:
+    name: contract-uploaded
 
 gemini:
   api:
