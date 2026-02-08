@@ -1,23 +1,23 @@
 package com.contractreview.userservice.service;
 
-
 import com.contractreview.userservice.dto.RegisterRequest;
 import com.contractreview.userservice.dto.UserResponse;
 import com.contractreview.userservice.entity.User;
 import com.contractreview.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
-    // CREATE
+    private final PasswordEncoder passwordEncoder;
+
     @Transactional
     public UserResponse createUser(RegisterRequest request) {
 
@@ -29,6 +29,7 @@ public class UserService {
 
         User user = User.builder()
                 .email(email)
+                .password(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName().trim())
                 .phoneNumber(request.getPhoneNumber())
                 .build();
@@ -42,8 +43,6 @@ public class UserService {
                 .map(this::mapToResponse)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
-
-
 
     // UPDATE (USING USER ID + SAME DTO)
     @Transactional
@@ -63,6 +62,10 @@ public class UserService {
         user.setEmail(email);
         user.setFullName(request.getFullName().trim());
         user.setPhoneNumber(request.getPhoneNumber());
+
+        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
 
         return mapToResponse(userRepository.save(user));
     }
@@ -87,9 +90,4 @@ public class UserService {
                 .updatedAt(user.getUpdatedAt() != null ? user.getUpdatedAt() : LocalDateTime.now())
                 .build();
     }
-
-
-
-
-
 }

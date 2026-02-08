@@ -13,14 +13,10 @@ spring:
       ddl-auto: update
     show-sql: true
 
-#jwt:
-#  secret: my-very-long-secret-key-used-in-both-gateway-and-user-service-1234567890abcdef1234567890
-#  access-token-expiration-ms: 1800000    # 30 minutes
-#  refresh-token-expiration-ms: 604800000 # 7 days
 
 logging:
   level:
-    org.springframework.security: INFO
+    org.springframework.security: DEBUG
     com.contractreview.userservice: DEBUG
 
 eureka:
